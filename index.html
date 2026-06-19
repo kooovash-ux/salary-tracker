@@ -6,53 +6,52 @@
 <title>Учет зарплаты</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,Segoe UI,Arial,sans-serif;background:#f5f5f5;color:#222;padding:16px;max-width:1100px;margin:0 auto}
+body{font-family:Tahoma,Verdana,Arial,sans-serif;background:#d4d0c8;color:#000;padding:0;max-width:1100px;margin:0 auto}
 #pinOverlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center}
-#pinBox{background:#fff;border-radius:10px;padding:30px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.3);width:300px}
-#pinBox h2{margin-bottom:16px;font-size:18px}
-#pinBox input{width:100%;padding:10px;font-size:24px;text-align:center;border:2px solid #ccc;border-radius:6px;outline:none;margin-bottom:12px;letter-spacing:8px}
-#pinBox input:focus{border-color:#1976d2}
-#pinBox .err{color:#c62828;font-size:13px;height:20px}
-#pinBox button{width:100%;padding:10px;background:#1976d2;color:#fff;border:none;border-radius:6px;font-size:16px;cursor:pointer}
-#pinBox button:hover{background:#1565c0}
+#pinBox{background:#f0f0f0;border:2px solid #6699cc;padding:24px;text-align:center;width:280px;font-family:Tahoma;box-shadow:4px 4px 8px rgba(0,0,0,.3)}
+#pinBox h2{margin-bottom:14px;font-size:14px;color:#1a3b6d;font-weight:700}
+#pinBox input{width:100%;padding:6px 8px;font-size:22px;text-align:center;border:1px solid #7f9db9;background:#fff;margin-bottom:10px;letter-spacing:8px;font-family:Tahoma;outline:none}
+#pinBox input:focus{border-color:#6699cc;background:#fffde0}
+#pinBox .err{color:#c00;font-size:12px;height:18px}
+#pinBox button{width:100%;padding:6px;background:linear-gradient(180deg,#e8eff7,#c4d8ed);color:#000;border:1px solid #7f9db9;font-size:13px;cursor:pointer;font-family:Tahoma}
+#pinBox button:hover{background:linear-gradient(180deg,#f0f5fb,#d4e4f2)}
 #content{display:none}
-h1{font-size:18px;margin-bottom:12px}
-.cards{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px}
-.card{background:#fff;border-radius:6px;padding:10px 12px;box-shadow:0 1px 3px rgba(0,0,0,.1)}
-.card .label{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.3px;margin-bottom:2px}
-.card .value{font-size:20px;font-weight:700}
-.card .value.debt{color:#c62828}
-.card .value.income{color:#2e7d32}
-.section{font-size:13px;font-weight:700;margin:14px 0 6px;color:#37474f}
-table{width:100%;border-collapse:collapse;background:#fff;border-radius:6px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.1);margin-bottom:14px}
-th{background:#37474f;color:#fff;padding:6px 5px;font-size:11px;text-align:center;white-space:nowrap;font-weight:600}
-td{padding:5px;font-size:12px;text-align:center;border-bottom:1px solid #eee}
-tr:last-child td{border-bottom:none}
-tr:hover{background:#f8f9fa}
-.stat-paid{color:#2e7d32;font-weight:600}
-.stat-part{color:#e65100;font-weight:600}
-.stat-unpaid{color:#c62828;font-weight:600}
-.num{font-variant-numeric:tabular-nums;white-space:nowrap}
-.form-wrap{background:#fff;border-radius:6px;padding:10px 12px;box-shadow:0 1px 3px rgba(0,0,0,.1);margin-bottom:14px}
-.form-wrap label{font-size:11px;color:#666}
+.header-bar{background:linear-gradient(180deg,#1a3b6d,#2a5a9a);color:#fff;padding:8px 12px;font-size:14px;font-weight:700;border-bottom:2px solid #0f2a50;margin-bottom:10px}
+.cards{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:0 10px 10px}
+.card{background:linear-gradient(180deg,#f8f9fa,#eef1f5);border:1px solid #b0b8c4;padding:6px 8px}
+.card .label{font-size:9px;color:#555;margin-bottom:1px}
+.card .value{font-size:18px;font-weight:700;font-family:Tahoma}
+.card .value.debt{color:#a00}
+.card .value.income{color:#080}
+.section{font-size:12px;font-weight:700;margin:10px 10px 4px;color:#1a3b6d;border-bottom:1px solid #b0b8c4;padding-bottom:2px}
+table{width:100%;border-collapse:collapse;margin-bottom:10px;border:1px solid #9aa8b7}
+th{background:linear-gradient(180deg,#d9e3f0,#b8c9e0);color:#000;padding:4px 5px;font-size:11px;text-align:center;white-space:nowrap;font-weight:700;border:1px solid #9aa8b7;font-family:Tahoma}
+td{padding:3px 5px;font-size:11px;text-align:center;border:1px solid #d0d7e0;font-family:Tahoma}
+tr:nth-child(even) td{background:#f4f6fa}
+tr:hover td{background:#e5edf8}
+.stat-paid{color:#060;font-weight:700}
+.stat-part{color:#a60;font-weight:700}
+.stat-unpaid{color:#c00;font-weight:700}
+.num{white-space:nowrap}
+.form-wrap{background:linear-gradient(180deg,#f8f9fa,#eef1f5);border:1px solid #b0b8c4;padding:8px 10px;margin:0 10px 10px}
+.form-wrap label{font-size:11px;color:#333}
 .form-wrap .frow{display:flex;gap:8px;align-items:flex-end;margin-top:4px;flex-wrap:wrap}
-.form-wrap input{padding:5px 7px;border:1px solid #ccc;border-radius:4px;font-size:13px}
-.form-wrap button{padding:6px 14px;background:#1976d2;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px;font-weight:600}
-.form-wrap button:hover{background:#1565c0}
-.summary{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;padding:10px 12px;background:#fff;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.1);font-size:13px}
+.form-wrap input{padding:3px 5px;border:1px solid #7f9db9;background:#fffde0;font-size:12px;font-family:Tahoma}
+.form-wrap button{padding:4px 12px;background:linear-gradient(180deg,#e8eff7,#c4d8ed);color:#000;border:1px solid #7f9db9;cursor:pointer;font-size:12px;font-family:Tahoma}
+.form-wrap button:hover{background:linear-gradient(180deg,#f0f5fb,#d4e4f2)}
+.summary{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;padding:6px 10px;background:linear-gradient(180deg,#f8f9fa,#eef1f5);border:1px solid #b0b8c4;margin:0 10px 6px;font-size:11px}
 .summary span{white-space:nowrap}
-.summary .sl{color:#888}
-.summary .sv{font-weight:700;margin-right:8px}
+.summary .sl{color:#555}
+.summary .sv{font-weight:700;margin-right:6px}
 .summary .sv:last-child{margin-right:0}
-.month-head td{background:#e8eaf6;font-weight:700;font-size:12px;text-align:left;padding:8px 6px;border-bottom:2px solid #c5cae9;color:#283593}
-.total-row td{background:#f5f5f5;font-weight:700;border-top:2px solid #bbb;font-size:12px}
-@media(max-width:700px){.cards{grid-template-columns:repeat(3,1fr)}}
+.month-head td{background:linear-gradient(180deg,#f0f3f8,#dce5f0);font-weight:700;font-size:11px;text-align:left;padding:4px 6px;border-bottom:1px solid #9aa8b7;color:#1a3b6d}
+.total-row td{background:linear-gradient(180deg,#f8f9fa,#eef1f5);font-weight:700;border-top:2px solid #888;font-size:11px}
 </style>
 </head>
 <body>
 <div id="pinOverlay"><div id="pinBox"><h2>Введите ПИН-код</h2><input type="password" id="pinInput" maxlength="6" inputmode="numeric" autofocus><div class="err" id="pinErr"></div><button id="pinBtn">Войти</button></div></div>
 <div id="content">
-<h1>Учет зарплаты</h1>
+<div class="header-bar">Учет зарплаты</div>
 <div class="cards" id="cards"></div>
 
 <div class="section">Начисления</div>
