@@ -21,8 +21,8 @@ body{font-family:Inter,-apple-system,Segoe UI,Arial,sans-serif;background:linear
 #pinBox button:hover{background:rgba(99,102,241,.18);border-color:rgba(99,102,241,.25)}
 #content{display:none}
 .header-bar{background:rgba(255,255,255,.7);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(0,0,0,.06);color:#1a1a2e;padding:14px 20px;font-size:16px;font-weight:600;letter-spacing:.3px;margin-bottom:16px}
-.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 16px 16px;justify-items:center}
-.card{background:rgba(255,255,255,.6);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.8);border-radius:14px;padding:14px 14px;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.04);max-width:220px}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 16px 16px}
+.card{background:rgba(255,255,255,.6);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.8);border-radius:14px;padding:12px 14px;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.04)}
 .card:hover{background:rgba(255,255,255,.8);border-color:rgba(255,255,255,.9);transform:translateY(-1px)}
 .card .label{font-size:9px;color:rgba(0,0,0,.35);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;font-weight:600}
 .card .value{font-size:20px;font-weight:700;font-family:Inter,monospace;color:#1a1a2e}
@@ -57,7 +57,7 @@ tr:hover td{background:rgba(99,102,241,.04)}
 @media(max-width:640px){
   body{max-width:100%;overflow-x:hidden}
   .cards{grid-template-columns:repeat(2,1fr);gap:6px;margin:0 8px 10px}
-  .card{padding:10px;border-radius:10px}
+  .card{padding:10px}
   .card .value{font-size:15px}
   .card .label{font-size:8px}
   .section{margin:0 8px 6px;font-size:11px}
