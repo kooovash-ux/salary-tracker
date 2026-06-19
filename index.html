@@ -23,8 +23,8 @@ body{font-family:Inter,-apple-system,Segoe UI,Arial,sans-serif;background:linear
 #content{display:none}
 .header-bar{background:rgba(255,255,255,.7);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(0,0,0,.06);color:#1a1a2e;padding:14px 20px;font-size:16px;font-weight:600;letter-spacing:.3px;margin-bottom:16px;display:flex;align-items:center;gap:12px}
 .logo{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;letter-spacing:0;flex-shrink:0}
-.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 16px 16px}
-.card{background:rgba(255,255,255,.6);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.8);border-radius:14px;padding:12px 14px;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.cards{display:flex;flex-wrap:wrap;gap:10px;margin:0 16px 16px}
+.card{background:rgba(255,255,255,.6);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.8);border-radius:14px;padding:12px 14px;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.04);flex:1;min-width:140px;max-width:250px}
 .card:hover{background:rgba(255,255,255,.8);border-color:rgba(255,255,255,.9);transform:translateY(-1px)}
 .card .label{font-size:9px;color:rgba(0,0,0,.35);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;font-weight:600}
 .card .value{font-size:20px;font-weight:700;font-family:Inter,monospace;color:#1a1a2e}
@@ -58,8 +58,8 @@ tr:hover td{background:rgba(99,102,241,.04)}
 .total-row td{background:rgba(99,102,241,.06);font-weight:700;border-top:1px solid rgba(0,0,0,.08);font-size:12px;color:#1a1a2e}
 @media(max-width:640px){
   body{max-width:100%;overflow-x:hidden}
-  .cards{grid-template-columns:repeat(2,1fr);gap:6px;margin:0 8px 10px}
-  .card{padding:10px}
+  .cards{flex-wrap:wrap;gap:6px;margin:0 8px 10px}
+  .card{flex:1;min-width:130px;max-width:none;padding:10px}
   .card .value{font-size:15px}
   .card .label{font-size:8px}
   .section{margin:0 8px 6px;font-size:11px}
@@ -69,7 +69,7 @@ tr:hover td{background:rgba(99,102,241,.04)}
   .header-bar{font-size:14px;padding:12px 14px;margin-bottom:10px}
 }
 @media(max-width:400px){
-  .cards{grid-template-columns:repeat(2,1fr)}
+  .card{flex:1;min-width:100%;max-width:none}
   th{font-size:9px;padding:6px 4px}
   td{font-size:10px;padding:5px 4px}
   .header-bar{font-size:13px;padding:10px 12px}
