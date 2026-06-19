@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>Учет зарплаты</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -104,6 +107,10 @@ const WHITE_SAL = 21670, GRAY_SAL = 65330;
 const INDIA_AMOUNT = 30000; // Согласованное в Индии
 const DATA_VERSION = 2;
 const APP_PIN = '1234'; // ПИН-код для входа
+// Clear old session PIN on new version
+if(sessionStorage.getItem('salary_pin') && sessionStorage.getItem('salary_pin') !== APP_PIN){
+  sessionStorage.removeItem('salary_pin');
+}
 
 function defaultData(){
   return {
