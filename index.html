@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Учет зарплаты</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -46,6 +46,23 @@ tr:hover td{background:#e5edf8}
 .summary .sv:last-child{margin-right:0}
 .month-head td{background:linear-gradient(180deg,#f0f3f8,#dce5f0);font-weight:700;font-size:11px;text-align:left;padding:4px 6px;border-bottom:1px solid #9aa8b7;color:#1a3b6d}
 .total-row td{background:linear-gradient(180deg,#f8f9fa,#eef1f5);font-weight:700;border-top:2px solid #888;font-size:11px}
+@media(max-width:640px){
+  body{max-width:100%;overflow-x:hidden}
+  .cards{grid-template-columns:repeat(3,1fr);gap:3px;margin:0 4px 6px}
+  .card .value{font-size:14px}
+  .card .label{font-size:8px}
+  .section{margin:6px 4px 2px;font-size:11px}
+  .form-wrap{margin:0 4px 6px}
+  .summary{margin:0 4px 4px;font-size:10px;gap:4px}
+  .summary .sv{margin-right:4px}
+  .header-bar{font-size:12px;padding:6px 8px}
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 4px 8px}
+}
+@media(max-width:400px){
+  .cards{grid-template-columns:repeat(2,1fr)}
+  th{font-size:10px;padding:2px 3px}
+  td{font-size:10px;padding:2px 3px}
+}
 </style>
 </head>
 <body>
@@ -55,14 +72,14 @@ tr:hover td{background:#e5edf8}
 <div class="cards" id="cards"></div>
 
 <div class="section">Начисления</div>
-<table><thead><tr>
+<div class="table-wrap"><table><thead><tr>
 <th>ID</th><th>Дата</th><th>Тип</th><th>Белая</th><th>Серая</th><th>Итого</th><th>Получено</th><th>Остаток</th><th>Статус</th>
-</tr></thead><tbody id="accBody"></tbody></table>
+</tr></thead><tbody id="accBody"></tbody></table></div>
 
 <div class="section">Поступления</div>
-<table><thead><tr>
+<div class="table-wrap"><table><thead><tr>
 <th>ID</th><th>Дата</th><th>Сумма</th><th>Комментарий</th>
-</tr></thead><tbody id="payBody"></tbody></table>
+</tr></thead><tbody id="payBody"></tbody></table></div>
 
 <div class="form-wrap">
   <div class="frow">
