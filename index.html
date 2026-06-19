@@ -36,6 +36,7 @@ tr:hover{background:#f8f9fa}
 .summary .sv{font-weight:700;margin-right:8px}
 .summary .sv:last-child{margin-right:0}
 .month-head td{background:#e8eaf6;font-weight:700;font-size:12px;text-align:left;padding:8px 6px;border-bottom:2px solid #c5cae9;color:#283593}
+.total-row td{background:#f5f5f5;font-weight:700;border-top:2px solid #bbb;font-size:12px}
 @media(max-width:700px){.cards{grid-template-columns:repeat(3,1fr)}}
 </style>
 </head>
@@ -237,7 +238,14 @@ function renderAll(){
       <td class="num">${fm(rem)}</td>
       <td class="${sc}">${st}</td>
     </tr>`;
-  }).join('');
+  }).join('') + '\n' + (() => {
+    const sw=sorted.reduce((s,a)=>s+a.white,0);
+    const sg=sorted.reduce((s,a)=>s+a.gray,0);
+    const stt=sorted.reduce((s,a)=>s+a.white+a.gray,0);
+    const sp=sorted.reduce((s,a)=>s+a.paid,0);
+    const sr=sorted.reduce((s,a)=>s+a.white+a.gray-a.paid,0);
+    return `<tr class="total-row"><td colspan="3">ИТОГО</td><td class="num">${fm(sw)}</td><td class="num">${fm(sg)}</td><td class="num">${fm(stt)}</td><td class="num">${fm(sp)}</td><td class="num">${fm(sr)}</td><td></td></tr>`;
+  })();
 
   const ps=[...data.payments].sort((a,b)=>parseDate(a.date)-parseDate(b.date));
   document.getElementById('payBody').innerHTML=ps.map(p=>
