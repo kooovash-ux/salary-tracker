@@ -9,52 +9,51 @@
 <title>Учет зарплаты</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Inter,-apple-system,Segoe UI,Arial,sans-serif;background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);color:#e0e0e0;padding:0;min-height:100vh;max-width:1100px;margin:0 auto}
-#pinOverlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-#pinBox{background:rgba(255,255,255,.08);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.15);padding:32px;text-align:center;width:300px;border-radius:16px}
-#pinBox h2{margin-bottom:16px;font-size:15px;color:#fff;font-weight:500;letter-spacing:.3px}
-#pinBox input{width:100%;padding:10px 12px;font-size:22px;text-align:center;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.25);color:#fff;margin-bottom:12px;letter-spacing:8px;font-family:Inter;outline:none;border-radius:10px}
-#pinBox input:focus{border-color:rgba(255,255,255,.3);background:rgba(0,0,0,.35)}
-#pinBox input::placeholder{color:rgba(255,255,255,.25)}
-#pinBox .err{color:#ff6b6b;font-size:12px;height:18px}
-#pinBox button{width:100%;padding:10px;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.12);font-size:14px;cursor:pointer;font-family:Inter;border-radius:10px;font-weight:500;transition:all .2s}
-#pinBox button:hover{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.25)}
+body{font-family:Inter,-apple-system,Segoe UI,Arial,sans-serif;background:linear-gradient(135deg,#f8f9ff,#e8ecf4,#dde1ed);color:#1a1a2e;padding:0;min-height:100vh;max-width:1100px;margin:0 auto}
+#pinOverlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.3);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+#pinBox{background:rgba(255,255,255,.7);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.8);padding:32px;text-align:center;width:300px;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.08)}
+#pinBox h2{margin-bottom:16px;font-size:15px;color:#1a1a2e;font-weight:600;letter-spacing:.3px}
+#pinBox input{width:100%;padding:10px 12px;font-size:22px;text-align:center;border:1px solid rgba(0,0,0,.08);background:rgba(255,255,255,.5);color:#1a1a2e;margin-bottom:12px;letter-spacing:8px;font-family:Inter;outline:none;border-radius:10px}
+#pinBox input:focus{border-color:rgba(99,102,241,.3);background:rgba(255,255,255,.7)}
+#pinBox input::placeholder{color:rgba(0,0,0,.2)}
+#pinBox .err{color:#e03131;font-size:12px;height:18px}
+#pinBox button{width:100%;padding:10px;background:rgba(99,102,241,.1);color:#6366f1;border:1px solid rgba(99,102,241,.15);font-size:14px;cursor:pointer;font-family:Inter;border-radius:10px;font-weight:600;transition:all .2s}
+#pinBox button:hover{background:rgba(99,102,241,.18);border-color:rgba(99,102,241,.25)}
 #content{display:none}
-.header-bar{background:rgba(255,255,255,.06);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.08);color:#fff;padding:14px 20px;font-size:16px;font-weight:600;letter-spacing:.3px;margin-bottom:16px}
+.header-bar{background:rgba(255,255,255,.7);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(0,0,0,.06);color:#1a1a2e;padding:14px 20px;font-size:16px;font-weight:600;letter-spacing:.3px;margin-bottom:16px}
 .cards{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:0 16px 16px}
-.card{background:rgba(255,255,255,.06);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px 14px;transition:all .2s}
-.card:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.15);transform:translateY(-1px)}
-.card .label{font-size:9px;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;font-weight:500}
-.card .value{font-size:20px;font-weight:700;font-family:Inter,monospace}
-.card .value.debt{color:#ff6b6b}
-.card .value.income{color:#51cf66}
-.section{font-size:13px;font-weight:600;margin:0 16px 8px;color:rgba(255,255,255,.6);letter-spacing:.5px;text-transform:uppercase}
-table{width:100%;border-collapse:collapse;margin-bottom:16px}
-.table-wrap{background:rgba(255,255,255,.04);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.06);border-radius:14px;overflow:hidden;margin:0 16px 16px}
+.card{background:rgba(255,255,255,.6);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.8);border-radius:14px;padding:14px 14px;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.card:hover{background:rgba(255,255,255,.8);border-color:rgba(255,255,255,.9);transform:translateY(-1px)}
+.card .label{font-size:9px;color:rgba(0,0,0,.35);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;font-weight:600}
+.card .value{font-size:20px;font-weight:700;font-family:Inter,monospace;color:#1a1a2e}
+.card .value.debt{color:#e03131}
+.card .value.income{color:#2f9e44}
+.section{font-size:13px;font-weight:600;margin:0 16px 8px;color:rgba(0,0,0,.4);letter-spacing:.5px;text-transform:uppercase}
+.table-wrap{background:rgba(255,255,255,.5);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.7);border-radius:14px;overflow:hidden;margin:0 16px 16px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
 .table-wrap table{margin-bottom:0}
-th{background:rgba(255,255,255,.06);color:rgba(255,255,255,.7);padding:10px 8px;font-size:10px;text-align:center;white-space:nowrap;font-weight:600;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.06)}
-td{padding:8px;font-size:12px;text-align:center;border-bottom:1px solid rgba(255,255,255,.04);font-family:Inter,monospace;color:rgba(255,255,255,.85)}
+th{background:rgba(99,102,241,.06);color:rgba(0,0,0,.5);padding:10px 8px;font-size:10px;text-align:center;white-space:nowrap;font-weight:600;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid rgba(0,0,0,.05)}
+td{padding:8px;font-size:12px;text-align:center;border-bottom:1px solid rgba(0,0,0,.03);font-family:Inter,monospace;color:rgba(0,0,0,.75)}
 tr:last-child td{border-bottom:none}
-tr:hover td{background:rgba(255,255,255,.04)}
-.stat-paid{color:#51cf66;font-weight:600}
-.stat-part{color:#ffd43b;font-weight:600}
-.stat-unpaid{color:#ff6b6b;font-weight:600}
+tr:hover td{background:rgba(99,102,241,.04)}
+.stat-paid{color:#2f9e44;font-weight:600}
+.stat-part{color:#e8590c;font-weight:600}
+.stat-unpaid{color:#e03131;font-weight:600}
 .num{white-space:nowrap}
-.form-wrap{background:rgba(255,255,255,.04);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:14px 16px;margin:0 16px 16px}
-.form-wrap label{font-size:11px;color:rgba(255,255,255,.5)}
+.form-wrap{background:rgba(255,255,255,.5);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.7);border-radius:14px;padding:14px 16px;margin:0 16px 16px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.form-wrap label{font-size:11px;color:rgba(0,0,0,.4)}
 .form-wrap .frow{display:flex;gap:10px;align-items:flex-end;margin-top:6px;flex-wrap:wrap}
-.form-wrap input{padding:8px 10px;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.2);color:#fff;font-size:13px;font-family:Inter;border-radius:8px;outline:none;transition:all .2s}
-.form-wrap input:focus{border-color:rgba(255,255,255,.25);background:rgba(0,0,0,.3)}
-.form-wrap input::placeholder{color:rgba(255,255,255,.2)}
-.form-wrap button{padding:8px 16px;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.1);cursor:pointer;font-size:12px;font-family:Inter;border-radius:8px;font-weight:500;transition:all .2s}
-.form-wrap button:hover{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.2)}
-.summary{display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap;padding:12px 16px;background:rgba(255,255,255,.04);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.06);border-radius:14px;margin:0 16px 16px;font-size:12px}
+.form-wrap input{padding:8px 10px;border:1px solid rgba(0,0,0,.08);background:rgba(255,255,255,.6);color:#1a1a2e;font-size:13px;font-family:Inter;border-radius:8px;outline:none;transition:all .2s}
+.form-wrap input:focus{border-color:rgba(99,102,241,.3);background:rgba(255,255,255,.8)}
+.form-wrap input::placeholder{color:rgba(0,0,0,.2)}
+.form-wrap button{padding:8px 16px;background:rgba(99,102,241,.08);color:#6366f1;border:1px solid rgba(99,102,241,.12);cursor:pointer;font-size:12px;font-family:Inter;border-radius:8px;font-weight:600;transition:all .2s}
+.form-wrap button:hover{background:rgba(99,102,241,.15);border-color:rgba(99,102,241,.2)}
+.summary{display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap;padding:12px 16px;background:rgba(255,255,255,.5);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.7);border-radius:14px;margin:0 16px 16px;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
 .summary span{white-space:nowrap}
-.summary .sl{color:rgba(255,255,255,.45)}
-.summary .sv{font-weight:600;margin-right:8px;color:rgba(255,255,255,.9)}
+.summary .sl{color:rgba(0,0,0,.35)}
+.summary .sv{font-weight:600;margin-right:8px;color:#1a1a2e}
 .summary .sv:last-child{margin-right:0}
-.month-head td{background:rgba(255,255,255,.04);font-weight:600;font-size:11px;text-align:left;padding:8px 10px;color:rgba(255,255,255,.6);letter-spacing:.5px;border-bottom:1px solid rgba(255,255,255,.06)}
-.total-row td{background:rgba(255,255,255,.06);font-weight:700;border-top:1px solid rgba(255,255,255,.1);font-size:12px;color:#fff}
+.month-head td{background:rgba(99,102,241,.04);font-weight:600;font-size:11px;text-align:left;padding:8px 10px;color:rgba(0,0,0,.5);letter-spacing:.5px;border-bottom:1px solid rgba(0,0,0,.05)}
+.total-row td{background:rgba(99,102,241,.06);font-weight:700;border-top:1px solid rgba(0,0,0,.08);font-size:12px;color:#1a1a2e}
 @media(max-width:640px){
   body{max-width:100%;overflow-x:hidden}
   .cards{grid-template-columns:repeat(3,1fr);gap:6px;margin:0 8px 10px}
