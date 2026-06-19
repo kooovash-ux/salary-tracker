@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Учет зарплаты</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,Segoe UI,Arial,sans-serif;background:#f5f5f5;color:#222;padding:16px;max-width:1100px;margin:0 auto}
+h1{font-size:18px;margin-bottom:12px}
+.cards{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px}
+.card{background:#fff;border-radius:6px;padding:10px 12px;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.card .label{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.3px;margin-bottom:2px}
+.card .value{font-size:20px;font-weight:700}
+.card .value.debt{color:#c62828}
+.card .value.income{color:#2e7d32}
+.section{font-size:13px;font-weight:700;margin:14px 0 6px;color:#37474f}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:6px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.1);margin-bottom:14px}
+th{background:#37474f;color:#fff;padding:6px 5px;font-size:11px;text-align:center;white-space:nowrap;font-weight:600}
+td{padding:5px;font-size:12px;text-align:center;border-bottom:1px solid #eee}
+tr:last-child td{border-bottom:none}
+tr:hover{background:#f8f9fa}
+.stat-paid{color:#2e7d32;font-weight:600}
+.stat-part{color:#e65100;font-weight:600}
+.stat-unpaid{color:#c62828;font-weight:600}
+.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.form-wrap{background:#fff;border-radius:6px;padding:10px 12px;box-shadow:0 1px 3px rgba(0,0,0,.1);margin-bottom:14px}
+.form-wrap label{font-size:11px;color:#666}
+.form-wrap .frow{display:flex;gap:8px;align-items:flex-end;margin-top:4px;flex-wrap:wrap}
+.form-wrap input{padding:5px 7px;border:1px solid #ccc;border-radius:4px;font-size:13px}
+.form-wrap button{padding:6px 14px;background:#1976d2;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px;font-weight:600}
+.form-wrap button:hover{background:#1565c0}
+.summary{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;padding:10px 12px;background:#fff;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.1);font-size:13px}
+.summary span{white-space:nowrap}
+.summary .sl{color:#888}
+.summary .sv{font-weight:700;margin-right:8px}
+.summary .sv:last-child{margin-right:0}
+.month-head td{background:#e8eaf6;font-weight:700;font-size:12px;text-align:left;padding:8px 6px;border-bottom:2px solid #c5cae9;color:#283593}
+@media(max-width:700px){.cards{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+
+<h1>Учет зарплаты</h1>
+<div class="cards" id="cards"></div>
+
+<div class="section">Начисления</div>
+<table><thead><tr>
+<th>ID</th><th>Дата</th><th>Тип</th><th>Белая</th><th>Серая</th><th>Итого</th><th>Получено</th><th>Остаток</th><th>Статус</th>
+</tr></thead><tbody id="accBody"></tbody></table>
+
+<div class="section">Поступления</div>
+<table><thead><tr>
+<th>ID</th><th>Дата</th><th>Сумма</th><th>Комментарий</th>
+</tr></thead><tbody id="payBody"></tbody></table>
+
+<div class="form-wrap">
+  <div class="frow">
+    <label>Дата <input type="date" id="payDate"></label>
+    <label>Сумма <input type="number" id="payAmount" min="1" step="1"></label>
+    <label>Комментарий <input type="text" id="payComment" placeholder="Перевод, наличные..."></label>
+    <button id="addPayBtn">+ Добавить</button>
+  </div>
+</div>
+
+<div class="summary" id="summary"></div>
+
+<script>
+const STORAGE_KEY = 'salary_tracker';
+
+function fmtDate(d){return d.toISOString().slice(0,10)}
+function parseDate(s){let p=s.split('-');return new Date(+p[0],+p[1]-1,+p[2])}
+function fm(n){return n.toLocaleString('ru-RU')}
+
+const WHITE_ADV = 14000, GRAY_ADV = 55000;
+const WHITE_SAL = 21670, GRAY_SAL = 65330;
+
+function defaultData(){
+  return {
+    // initial debt is stored as first entry in accruals
+    interestDebt: 50160,
+    accruals: [],
+    payments: [],
+    nextAccId: 1,
+    nextPayId: 1
+  };
+}
+
+function loadData(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return null;
+}
+function saveData(d){localStorage.setItem(STORAGE_KEY,JSON.stringify(d))}
+
+function seedData(){
+  const d = defaultData();
+  // March - May 2026 real data + correction
+  // Total accrued: 472,660, paid before 09.06: 321,680, remaining: 150,980
+  // FIFO distribution: oldest accruals paid first
+  d.accruals = [
+    {id:1,date:'2026-03-25',type:'Аванс',white:14000,gray:55000,paid:69000},
+    {id:2,date:'2026-04-05',type:'Зарплата',white:21670,gray:65330,paid:87000},
+    {id:3,date:'2026-04-25',type:'Аванс',white:14000,gray:55000,paid:69000},
+    {id:4,date:'2026-05-05',type:'Зарплата',white:21670,gray:30660,paid:52330},
+    {id:5,date:'2026-05-05',type:'Доп. начисление',white:0,gray:34670,paid:34670},
+    {id:6,date:'2026-05-25',type:'Аванс',white:14000,gray:55000,paid:9680},
+    {id:7,date:'2026-06-05',type:'Зарплата',white:21670,gray:65330,paid:0},
+    {id:8,date:'2026-06-09',type:'Корректировка',white:0,gray:4660,paid:0}
+  ];
+  d.payments = [
+    {id:1,date:'2026-06-09',amount:321680,comment:'Выплаты до 09.06'}
+  ];
+  d.nextAccId = 9;
+  d.nextPayId = 2;
+  return d;
+}
+
+function generateAutoAccruals(data){
+  const now = new Date();
+  let maxDate = null;
+  for(const a of data.accruals){
+    const d = parseDate(a.date);
+    if(!maxDate||d>maxDate) maxDate=d;
+  }
+  if(!maxDate) maxDate=new Date(now.getFullYear(),now.getMonth(),1);
+
+  const sy=maxDate.getFullYear(), sm=maxDate.getMonth();
+  const ey=now.getFullYear(), em=now.getMonth();
+
+  let changed=false;
+  for(let y=sy;y<=ey;y++){
+    const mn=(y===sy)?sm:0, mx=(y===ey)?em:11;
+    for(let m=mn;m<=mx;m++){
+      const d25=new Date(y,m,25);
+      if(d25>maxDate&&d25<=now){
+        const ds=fmtDate(d25);
+        if(!data.accruals.find(a=>a.date===ds&&a.type==='Аванс')){
+          data.accruals.push({id:data.nextAccId++,date:ds,type:'Аванс',white:WHITE_ADV,gray:GRAY_ADV,paid:0});
+          changed=true;
+        }
+      }
+      const d5=new Date(y,m+1,5);
+      if(d5>maxDate&&d5<=now){
+        const ds=fmtDate(d5);
+        if(!data.accruals.find(a=>a.date===ds&&a.type==='Зарплата')){
+          data.accruals.push({id:data.nextAccId++,date:ds,type:'Зарплата',white:WHITE_SAL,gray:GRAY_SAL,paid:0});
+          changed=true;
+        }
+      }
+    }
+  }
+  if(changed) data.accruals.sort((a,b)=>parseDate(a.date)-parseDate(b.date));
+  return changed;
+}
+
+function calcStats(data){
+  let totalAccrued=0, salaryDebt=0;
+  for(const a of data.accruals){
+    const tot=a.white+a.gray;
+    totalAccrued+=tot;
+    salaryDebt+=(tot-a.paid);
+  }
+  let paymentsTotal=0;
+  for(const p of data.payments) paymentsTotal+=p.amount;
+
+  return {
+    totalAccrued,
+    paymentsTotal,
+    salaryDebt,
+    interestDebt: data.interestDebt,
+    totalDebt: salaryDebt+data.interestDebt
+  };
+}
+
+function statusStr(paid,total){
+  if(paid<=0) return 'Не получено';
+  if(paid>=total) return 'Получено';
+  return 'Частично';
+}
+function statusClass(paid,total){
+  if(paid<=0) return 'stat-unpaid';
+  if(paid>=total) return 'stat-paid';
+  return 'stat-part';
+}
+
+function renderAll(){
+  const data=loadData();
+  const stats=calcStats(data);
+
+  document.getElementById('cards').innerHTML=[
+    {l:'Общий долг',v:stats.totalDebt,c:'debt'},
+    {l:'Долг по ЗП',v:stats.salaryDebt,c:'debt'},
+    {l:'Долг по %',v:stats.interestDebt,c:'debt'},
+    {l:'Всего начислено',v:stats.totalAccrued,c:'income'},
+    {l:'Всего получено',v:stats.paymentsTotal,c:'income'}
+  ].map(c=>`<div class="card"><div class="label">${c.l}</div><div class="value ${c.c}">${fm(c.v)} &#8381;</div></div>`).join('');
+
+  const monthNames = ['','Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+  const sorted=[...data.accruals].sort((a,b)=>parseDate(a.date)-parseDate(b.date));
+  let prevMonth='';
+  document.getElementById('accBody').innerHTML=sorted.map(a=>{
+    const d=parseDate(a.date);
+    const mk=d.getFullYear()+'-'+d.getMonth();
+    let head='';
+    if(mk!==prevMonth){
+      prevMonth=mk;
+      head=`<tr class="month-head"><td colspan="9">${monthNames[d.getMonth()+1]} ${d.getFullYear()}</td></tr>`;
+    }
+    const tot=a.white+a.gray, rem=tot-a.paid;
+    const st=statusStr(a.paid,tot), sc=statusClass(a.paid,tot);
+    return head+`<tr>
+      <td>${a.id}</td>
+      <td>${a.date}</td>
+      <td>${a.type}</td>
+      <td class="num">${fm(a.white)}</td>
+      <td class="num">${fm(a.gray)}</td>
+      <td class="num">${fm(tot)}</td>
+      <td class="num">${fm(a.paid)}</td>
+      <td class="num">${fm(rem)}</td>
+      <td class="${sc}">${st}</td>
+    </tr>`;
+  }).join('');
+
+  const ps=[...data.payments].sort((a,b)=>parseDate(a.date)-parseDate(b.date));
+  document.getElementById('payBody').innerHTML=ps.map(p=>
+    `<tr><td>${p.id}</td><td>${p.date}</td><td class="num">${fm(p.amount)}</td><td>${p.comment||'-'}</td></tr>`
+  ).join('');
+
+  document.getElementById('summary').innerHTML=`
+    <span><span class="sl">Начислено:</span> <span class="sv">${fm(stats.totalAccrued)} &#8381;</span></span>
+    <span><span class="sl">Получено:</span> <span class="sv">${fm(stats.paymentsTotal)} &#8381;</span></span>
+    <span><span class="sl">Долг по ЗП:</span> <span class="sv">${fm(stats.salaryDebt)} &#8381;</span></span>
+    <span><span class="sl">Долг по %:</span> <span class="sv">${fm(stats.interestDebt)} &#8381;</span></span>
+    <span><span class="sl">Общий долг:</span> <span class="sv" style="color:#c62828">${fm(stats.totalDebt)} &#8381;</span></span>
+  `;
+}
+
+function applyFIFO(data,amount){
+  let rem=amount;
+  const sorted=[...data.accruals].sort((a,b)=>parseDate(a.date)-parseDate(b.date));
+  for(const a of sorted){
+    if(rem<=0) break;
+    const unpaid=(a.white+a.gray)-a.paid;
+    if(unpaid>0){
+      const r=Math.min(unpaid,rem);
+      a.paid+=r;
+      rem-=r;
+    }
+  }
+}
+
+function addPayment(){
+  const data=loadData();
+  if(!data) return;
+  const de=document.getElementById('payDate'), ae=document.getElementById('payAmount'), ce=document.getElementById('payComment');
+  let date=de.value;
+  if(!date){date=fmtDate(new Date());de.value=date}
+  const amount=parseInt(ae.value);
+  if(!amount||amount<1){alert('Введите сумму');return}
+  data.payments.push({id:data.nextPayId++,date,amount,comment:ce.value.trim()||''});
+  applyFIFO(data,amount);
+  saveData(data);
+  ae.value='';ce.value='';
+  renderAll();
+}
+
+(function(){
+  // reset via ?reset=1 or ?clear=1
+  if(location.search.includes('reset')||location.search.includes('clear')){
+    try{localStorage.removeItem(STORAGE_KEY)}catch(e){}
+    if(location.search.includes('reset')) history.replaceState(null,'',location.pathname);
+  }
+  let data=loadData();
+  if(!data){data=seedData();saveData(data)}
+  generateAutoAccruals(data);
+  data.accruals.sort((a,b)=>parseDate(a.date)-parseDate(b.date));
+  saveData(data);
+  document.getElementById('addPayBtn').addEventListener('click',addPayment);
+  document.getElementById('payAmount').addEventListener('keydown',function(e){if(e.key==='Enter')addPayment()});
+  renderAll();
+})();
+</script>
+</body>
+</html>
