@@ -75,10 +75,11 @@ function fm(n){return n.toLocaleString('ru-RU')}
 const WHITE_ADV = 14000, GRAY_ADV = 55000;
 const WHITE_SAL = 21670, GRAY_SAL = 65330;
 const INDIA_AMOUNT = 30000; // Согласованное в Индии
+const DATA_VERSION = 2;
 
 function defaultData(){
   return {
-    // initial debt is stored as first entry in accruals
+    version: DATA_VERSION,
     interestDebt: 50160,
     accruals: [],
     payments: [],
@@ -288,6 +289,11 @@ function addPayment(){
     if(location.search.includes('reset')) history.replaceState(null,'',location.pathname);
   }
   let data=loadData();
+  // version check - re-seed if schema changed
+  if(data && data.version !== DATA_VERSION){
+    try{localStorage.removeItem(STORAGE_KEY)}catch(e){}
+    data=seedData();saveData(data)
+  }
   if(!data){data=seedData();saveData(data)}
   generateAutoAccruals(data);
   data.accruals.sort((a,b)=>parseDate(a.date)-parseDate(b.date));
