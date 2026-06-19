@@ -74,6 +74,7 @@ function fm(n){return n.toLocaleString('ru-RU')}
 
 const WHITE_ADV = 14000, GRAY_ADV = 55000;
 const WHITE_SAL = 21670, GRAY_SAL = 65330;
+const INDIA_AMOUNT = 30000; // Согласованное в Индии
 
 function defaultData(){
   return {
@@ -97,23 +98,27 @@ function saveData(d){localStorage.setItem(STORAGE_KEY,JSON.stringify(d))}
 
 function seedData(){
   const d = defaultData();
-  // March - May 2026 real data + correction
-  // Total accrued: 472,660, paid before 09.06: 321,680, remaining: 150,980
+  // March - June 2026 real data + correction + Согл. в Индии (4x30k)
+  // Total accrued: 592,660 (472,660 salary + 120,000 India), paid: 321,680, remaining: 270,980
   // FIFO distribution: oldest accruals paid first
   d.accruals = [
-    {id:1,date:'2026-03-25',type:'Аванс',white:14000,gray:55000,paid:69000},
-    {id:2,date:'2026-04-05',type:'Зарплата',white:21670,gray:65330,paid:87000},
-    {id:3,date:'2026-04-25',type:'Аванс',white:14000,gray:55000,paid:69000},
-    {id:4,date:'2026-05-05',type:'Зарплата',white:21670,gray:30660,paid:52330},
-    {id:5,date:'2026-05-05',type:'Доп. начисление',white:0,gray:34670,paid:34670},
-    {id:6,date:'2026-05-25',type:'Аванс',white:14000,gray:55000,paid:9680},
-    {id:7,date:'2026-06-05',type:'Зарплата',white:21670,gray:65330,paid:0},
-    {id:8,date:'2026-06-09',type:'Корректировка',white:0,gray:4660,paid:0}
+    {id:1,date:'2026-03-01',type:'Согл. в Индии',white:0,gray:30000,paid:0},
+    {id:2,date:'2026-03-25',type:'Аванс',white:14000,gray:55000,paid:69000},
+    {id:3,date:'2026-04-01',type:'Согл. в Индии',white:0,gray:30000,paid:0},
+    {id:4,date:'2026-04-05',type:'Зарплата',white:21670,gray:65330,paid:87000},
+    {id:5,date:'2026-04-25',type:'Аванс',white:14000,gray:55000,paid:69000},
+    {id:6,date:'2026-05-01',type:'Согл. в Индии',white:0,gray:30000,paid:0},
+    {id:7,date:'2026-05-05',type:'Зарплата',white:21670,gray:30660,paid:52330},
+    {id:8,date:'2026-05-05',type:'Доп. начисление',white:0,gray:34670,paid:34670},
+    {id:9,date:'2026-05-25',type:'Аванс',white:14000,gray:55000,paid:9680},
+    {id:10,date:'2026-06-01',type:'Согл. в Индии',white:0,gray:30000,paid:0},
+    {id:11,date:'2026-06-05',type:'Зарплата',white:21670,gray:65330,paid:0},
+    {id:12,date:'2026-06-09',type:'Корректировка',white:0,gray:4660,paid:0}
   ];
   d.payments = [
     {id:1,date:'2026-06-09',amount:321680,comment:'Выплаты до 09.06'}
   ];
-  d.nextAccId = 9;
+  d.nextAccId = 13;
   d.nextPayId = 2;
   return d;
 }
@@ -134,6 +139,15 @@ function generateAutoAccruals(data){
   for(let y=sy;y<=ey;y++){
     const mn=(y===sy)?sm:0, mx=(y===ey)?em:11;
     for(let m=mn;m<=mx;m++){
+      // 1st - Согласованное в Индии
+      const d1=new Date(y,m,1);
+      if(d1>maxDate&&d1<=now){
+        const ds=fmtDate(d1);
+        if(!data.accruals.find(a=>a.date===ds&&a.type==='Согл. в Индии')){
+          data.accruals.push({id:data.nextAccId++,date:ds,type:'Согл. в Индии',white:0,gray:INDIA_AMOUNT,paid:0});
+          changed=true;
+        }
+      }
       const d25=new Date(y,m,25);
       if(d25>maxDate&&d25<=now){
         const ds=fmtDate(d25);
