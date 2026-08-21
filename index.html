@@ -31,6 +31,10 @@ body{font-family:Inter,-apple-system,Segoe UI,Arial,sans-serif;background:linear
 .card .value.debt{color:#e03131}
 .card .value.income{color:#2f9e44}
 .section{font-size:13px;font-weight:600;margin:0 16px 8px;color:rgba(0,0,0,.4);letter-spacing:.5px;text-transform:uppercase}
+.rules-box{background:rgba(255,255,255,.5);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.7);border-radius:14px;padding:14px 18px;margin:0 16px 16px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.rules-box ol{margin:0;padding-left:18px;font-size:12.5px;line-height:1.6;color:rgba(0,0,0,.65)}
+.rules-box li{margin-bottom:4px}
+.rules-box b{color:#1a1a2e}
 .table-wrap{background:rgba(255,255,255,.5);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.7);border-radius:14px;overflow:hidden;margin:0 16px 16px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
 .table-wrap table{margin-bottom:0}
 th{background:rgba(99,102,241,.06);color:rgba(0,0,0,.5);padding:10px 8px;font-size:10px;text-align:center;white-space:nowrap;font-weight:600;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid rgba(0,0,0,.05)}
@@ -82,6 +86,8 @@ tr:hover td{background:rgba(99,102,241,.04)}
 <div class="header-bar"><span class="logo">ЗП</span> Учет зарплаты</div>
 <div class="cards" id="cards"></div>
 
+<div id="svetlanaRules"></div>
+
 <div class="section">Начисления</div>
 <div class="table-wrap"><table><thead><tr>
 <th>ID</th><th>Дата</th><th>Тип</th><th>Белая</th><th>Серая</th><th>Итого</th><th>Получено</th><th>Остаток</th><th>Статус</th>
@@ -112,7 +118,36 @@ function fm(n){return n.toLocaleString('ru-RU')}
 
 const WHITE_ADV = 14000, GRAY_ADV = 55000;
 const WHITE_SAL = 21670, GRAY_SAL = 65330;
-const INDIA_AMOUNT = 30000; // Согласованное в Индии
+const INDIA_AMOUNT = 30000; // Согласованное в Индии (для детальной таблицы начислений, справочно)
+
+// ===== Правила расчёта долга по методике Светланы (бухгалтер) =====
+// Подтверждено ей лично 21.08.2026, долг на 01.08.2026 = 189 560 сошёлся точно.
+// 1. Долг на 01.06.2026 = 240 900 — стартовая база (её цифру дала Оксана).
+//    Эта база уже включает всё, что произошло по 09.06.2026 включительно
+//    (в т.ч. платёж 321 680 от 09.06) — повторно эти деньги не считаем.
+// 2. Каждый месяц (с июня и далее, включая текущий незакрытый) начисляется
+//    ФИКСИРОВАННО 180 000 ₽ — это ОДНА сумма на всё: белая зарплата + серая
+//    доплата + Согласовано в Индии. От числа рабочих дней не зависит.
+// 3. Белая часть внутри 180 000 — тоже фиксированная: 41 000 оклад минус 13%
+//    НДФЛ (5 330) = 35 670 на руки, всегда двумя платежами (14 000 аванс +
+//    21 670 зарплата).
+// 4. Всё остальное (144 330 = 180 000 − 35 670) идёт без графика, любыми
+//    поступлениями — считается по факту того, что реально пришло.
+// 5. Действует СДВИГ НА МЕСЯЦ (подтверждено ей напрямую 21.08.2026): деньги,
+//    пришедшие в месяце M+1, закрывают потребность месяца M. Пример: 145 000,
+//    полученные 10.08, закрывают ИЮЛЬ, а не август ("август ещё не закончился").
+//    На итоговую сумму долга этот сдвиг не влияет (это просто который из
+//    месяцев считается "закрытым"), поэтому в формуле ниже отдельно не
+//    учитывается — просто суммируются все поступления после базовой даты.
+// 6. Излишек сверх месячной потребности уменьшает НАКОПЛЕННЫЙ долг, а не
+//    текущий месяц.
+// 7. % (старый долг, 50 160) — отдельно, в этот расчёт НЕ входит вообще,
+//    Светлана его не считает и не видит.
+const SVETLANA_BASE_DEBT = 240900;
+const SVETLANA_BASE_DATE = '2026-06-01';
+const SVETLANA_CUTOFF_DATE = '2026-06-09'; // поступления по эту дату уже внутри базы
+const SVETLANA_MONTHLY_TOTAL = 180000; // бел+сер+Индия вместе, подтверждено Светланой
+
 const DATA_VERSION = 2;
 const APP_PIN = '1234'; // ПИН-код для входа
 // Clear old session PIN on new version
@@ -214,22 +249,45 @@ function generateAutoAccruals(data){
   return changed;
 }
 
+function monthsTouchedSince(anchorDateStr, today){
+  const a = parseDate(anchorDateStr);
+  return (today.getFullYear()-a.getFullYear())*12 + (today.getMonth()-a.getMonth()) + 1;
+}
+
+// Долг по ЗП по методике Светланы — см. правила выше. Считает и на сегодня,
+// и на любую будущую дату (просто пересчитается сама при заходе в приложение).
+function calcSvetlanaDebt(data, today){
+  today = today || new Date();
+  const months = monthsTouchedSince(SVETLANA_BASE_DATE, today);
+  const cutoff = parseDate(SVETLANA_CUTOFF_DATE);
+  let received = 0;
+  for(const p of data.payments){
+    if(parseDate(p.date) > cutoff) received += p.amount;
+  }
+  return SVETLANA_BASE_DEBT + SVETLANA_MONTHLY_TOTAL*months - received;
+}
+
 function calcStats(data){
-  let totalAccrued=0, salaryDebt=0, indiaDebt=0;
+  // Долг по ЗП теперь считается по методике Светланы (см. правила выше),
+  // а не по сумме остатков в таблице начислений — так он реально сходится
+  // с её расчётом и продолжит сходиться дальше, а не только сегодня.
+  // Эта цифра УЖЕ включает Согл. в Индии (Светлана сама так считает).
+  let totalAccrued=0, indiaAccrued=0;
   for(const a of data.accruals){
     const tot=a.white+a.gray;
     totalAccrued+=tot;
-    salaryDebt+=(tot-a.paid);
-    if(a.type==='Согл. в Индии') indiaDebt+=(tot-a.paid);
+    if(a.type==='Согл. в Индии') indiaAccrued+=tot;
   }
   let paymentsTotal=0;
   for(const p of data.payments) paymentsTotal+=p.amount;
+
+  const salaryDebt = calcSvetlanaDebt(data);
 
   return {
     totalAccrued,
     paymentsTotal,
     salaryDebt,
-    indiaDebt,
+    indiaAccrued, // справочно: сколько всего начислено по Индии (уже внутри salaryDebt, не прибавлять)
     interestDebt: data.interestDebt,
     totalDebt: salaryDebt+data.interestDebt
   };
@@ -252,13 +310,30 @@ function renderAll(){
 
   document.getElementById('cards').innerHTML=[
     {l:'Общий долг',v:stats.totalDebt,c:'debt'},
-    {l:'Долг по ЗП',v:stats.salaryDebt,c:'debt'},
+    {l:'Долг по ЗП (сверено со Светланой)',v:stats.salaryDebt,c:'debt'},
     {l:'Долг по %',v:stats.interestDebt,c:'debt',link:'https://github.com/kooovash-ux/salary-tracker/raw/master/%D0%94%D0%B5%D0%BA%D0%B0%D0%B1%D1%80%D1%8C.xlsx'},
-    {l:'Согл. в Индии',v:stats.indiaDebt,c:'debt'}
+    {l:'из них Согл. в Индии (справочно, уже внутри)',v:stats.indiaAccrued,c:'debt'}
   ].map(c=>{
     const val=`<div class="value ${c.c}">${fm(c.v)} &#8381;</div>`;
     return `<div class="card"><div class="label">${c.l}</div>${c.link?`<a href="${c.link}" target="_blank" style="text-decoration:none;color:inherit">${val}</a>`:val}</div>`;
   }).join('');
+
+  const rulesEl = document.getElementById('svetlanaRules');
+  if(rulesEl){
+    rulesEl.innerHTML = `
+      <div class="section" style="margin-top:0">Как считает Светлана</div>
+      <div class="rules-box">
+        <ol>
+          <li>База: долг на 01.06.2026 = 240 900 ₽ (цифру дала Оксана, уже включает всё по 09.06.2026).</li>
+          <li>Каждый месяц (включая текущий незакрытый) начисляется фиксированно <b>180 000 ₽</b> — белая + серая + Согласовано в Индии одной суммой, от рабочих дней не зависит.</li>
+          <li>Белая часть внутри — 41 000 оклад минус 13% НДФЛ = 35 670 на руки (14 000 аванс + 21 670 зарплата), всегда одна и та же.</li>
+          <li>Остальное (144 330 ₽/мес) — без графика, любыми поступлениями по факту.</li>
+          <li>Деньги, пришедшие в месяце M+1, закрывают потребность месяца M (сдвиг на месяц — подтверждено ею).</li>
+          <li>Излишек сверх нужды месяца уменьшает накопленный долг, а не текущий месяц.</li>
+          <li>% (50 160, старый долг) она не считает вообще — отдельная сумма.</li>
+        </ol>
+      </div>`;
+  }
 
   const monthNames = ['','Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
   const sorted=[...data.accruals].sort((a,b)=>parseDate(a.date)-parseDate(b.date));
@@ -308,8 +383,12 @@ function renderAll(){
 }
 
 function applyFIFO(data,amount){
+  // "Согл. в Индии" гасится отдельно (Оксана), обычные поступления её не трогают,
+  // иначе дата 1-го числа каждого месяца утянет на себя платёж раньше аванса/зарплаты.
   let rem=amount;
-  const sorted=[...data.accruals].sort((a,b)=>parseDate(a.date)-parseDate(b.date));
+  const sorted=[...data.accruals]
+    .filter(a=>a.type!=='Согл. в Индии')
+    .sort((a,b)=>parseDate(a.date)-parseDate(b.date));
   for(const a of sorted){
     if(rem<=0) break;
     const unpaid=(a.white+a.gray)-a.paid;
