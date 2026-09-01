@@ -105,6 +105,13 @@ tr:hover td{background:rgba(99,102,241,.04)}
     <label>Комментарий <input type="text" id="payComment" placeholder="Перевод, наличные..."></label>
     <button id="addPayBtn">+ Добавить</button>
   </div>
+  <div style="margin-top:10px">
+    <a href="#" id="showImportBtn" style="font-size:12px;color:rgba(0,0,0,.4)">Импорт списком (JSON)</a>
+    <div id="importBox" style="display:none;margin-top:8px">
+      <textarea id="importText" rows="6" style="width:100%;font-family:monospace;font-size:11px;padding:8px;border:1px solid rgba(0,0,0,.08);border-radius:8px;background:rgba(255,255,255,.6)" placeholder='[{"date":"2026-06-22","amount":14000,"comment":"На т-банк"}, ...]'></textarea>
+      <button id="doImportBtn" style="margin-top:6px;padding:8px 16px;background:rgba(99,102,241,.08);color:#6366f1;border:1px solid rgba(99,102,241,.12);cursor:pointer;font-size:12px;font-family:Inter;border-radius:8px;font-weight:600">Импортировать</button>
+    </div>
+  </div>
 </div>
 
 <div class="summary" id="summary"></div>
@@ -498,6 +505,35 @@ function addPayment(){
   saveData(data);
   document.getElementById('addPayBtn').addEventListener('click',addPayment);
   document.getElementById('payAmount').addEventListener('keydown',function(e){if(e.key==='Enter')addPayment()});
+
+  document.getElementById('showImportBtn').addEventListener('click',function(e){
+    e.preventDefault();
+    const box = document.getElementById('importBox');
+    box.style.display = box.style.display==='none' ? 'block' : 'none';
+  });
+  document.getElementById('doImportBtn').addEventListener('click',function(){
+    const raw = document.getElementById('importText').value.trim();
+    if(!raw) return;
+    let list;
+    try{ list = JSON.parse(raw); }catch(e){ alert('Не получилось разобрать JSON: '+e.message); return; }
+    if(!Array.isArray(list)){ alert('Ожидается список [{date,amount,comment}, ...]'); return; }
+    const d = loadData();
+    let added = 0;
+    for(const item of list){
+      if(!item.date || !item.amount) continue;
+      // не добавлять дубликат: та же дата+сумма уже есть
+      if(d.payments.some(p=>p.date===item.date && p.amount===item.amount)) continue;
+      d.payments.push({id:d.nextPayId++, date:item.date, amount:item.amount, comment:item.comment||''});
+      applyFIFO(d, item.amount);
+      added++;
+    }
+    saveData(d);
+    document.getElementById('importText').value='';
+    document.getElementById('importBox').style.display='none';
+    renderAll();
+    alert(`Добавлено записей: ${added}`);
+  });
+
   renderAll();
 })();
 
