@@ -83,7 +83,7 @@ tr:hover td{background:rgba(99,102,241,.04)}
 <body>
 <div id="pinOverlay"><div id="pinBox"><h2>Введите ПИН-код</h2><input type="password" id="pinInput" maxlength="6" inputmode="numeric" autofocus><div class="err" id="pinErr"></div><button id="pinBtn">Войти</button></div></div>
 <div id="content">
-<div class="header-bar"><span class="logo">ЗП</span> Учет зарплаты</div>
+<div class="header-bar"><span class="logo">ЗП</span> Учет зарплаты <span id="syncStatus" style="margin-left:auto;font-size:11px;font-weight:400;opacity:.7">синхронизация...</span></div>
 <div class="cards" id="cards"></div>
 
 <div id="svetlanaRules"></div>
@@ -173,7 +173,63 @@ function loadData(){
   }catch(e){}
   return null;
 }
-function saveData(d){localStorage.setItem(STORAGE_KEY,JSON.stringify(d))}
+
+// ===== Облачное хранилище (GitHub Gist) — синхронизация между устройствами =====
+// Токен НЕ хранится в коде/репозитории (это было бы виден всем в паблик-репо
+// и его отзовёт сам GitHub). Вместо этого он спрашивается один раз на
+// устройстве и живёт только в localStorage этого браузера.
+const GIST_ID = '45e4ee608c55f5b45204054e39444116';
+const GIST_FILENAME = 'salary-data.json';
+const TOKEN_KEY = 'gist_token';
+
+function getGistToken(){
+  let t = localStorage.getItem(TOKEN_KEY);
+  if(!t){
+    t = prompt('Токен для синхронизации (создан на github.com/settings/tokens, права только Gist):');
+    if(t) localStorage.setItem(TOKEN_KEY, t.trim());
+  }
+  return t;
+}
+
+async function fetchCloudData(){
+  const token = getGistToken();
+  if(!token) return null;
+  try{
+    const res = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+      headers: { 'Authorization': `token ${token}` }
+    });
+    if(!res.ok) return null;
+    const json = await res.json();
+    const file = json.files && json.files[GIST_FILENAME];
+    if(!file || !file.content) return null;
+    return JSON.parse(file.content);
+  }catch(e){ return null; }
+}
+
+async function pushCloudData(data){
+  const token = localStorage.getItem(TOKEN_KEY);
+  if(!token){ setSyncStatus(false); return; }
+  try{
+    await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+      method: 'PATCH',
+      headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ files: { [GIST_FILENAME]: { content: JSON.stringify(data, null, 2) } } })
+    });
+    setSyncStatus(true);
+  }catch(e){ setSyncStatus(false); }
+}
+
+function setSyncStatus(ok){
+  const el = document.getElementById('syncStatus');
+  if(!el) return;
+  el.textContent = ok ? 'облако ✓' : 'офлайн, не синхронизировано';
+  el.style.color = ok ? '#2f9e44' : '#e03131';
+}
+
+function saveData(d, pushCloud){
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(d));
+  if(pushCloud !== false) pushCloudData(d);
+}
 
 function seedData(){
   const d = defaultData();
@@ -414,19 +470,29 @@ function addPayment(){
   renderAll();
 }
 
-(function(){
+(async function(){
   // reset via ?reset=1 or ?clear=1
   if(location.search.includes('reset')||location.search.includes('clear')){
     try{localStorage.removeItem(STORAGE_KEY)}catch(e){}
     if(location.search.includes('reset')) history.replaceState(null,'',location.pathname);
   }
-  let data=loadData();
-  // version check - re-seed if schema changed
-  if(data && data.version !== DATA_VERSION){
-    try{localStorage.removeItem(STORAGE_KEY)}catch(e){}
-    data=seedData();saveData(data)
+
+  // Сначала пробуем облако (актуальнее, синхронизировано со всех устройств).
+  // Если офлайн/ошибка — работаем с локальной копией как раньше.
+  let data = await fetchCloudData();
+  if(data){
+    setSyncStatus(true);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } else {
+    setSyncStatus(false);
+    data = loadData();
+    if(data && data.version !== DATA_VERSION){
+      try{localStorage.removeItem(STORAGE_KEY)}catch(e){}
+      data=seedData();
+    }
+    if(!data){data=seedData();}
   }
-  if(!data){data=seedData();saveData(data)}
+
   generateAutoAccruals(data);
   data.accruals.sort((a,b)=>parseDate(a.date)-parseDate(b.date));
   saveData(data);
