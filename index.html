@@ -514,24 +514,41 @@ function addPayment(){
   document.getElementById('doImportBtn').addEventListener('click',function(){
     const raw = document.getElementById('importText').value.trim();
     if(!raw) return;
-    let list;
-    try{ list = JSON.parse(raw); }catch(e){ alert('Не получилось разобрать JSON: '+e.message); return; }
-    if(!Array.isArray(list)){ alert('Ожидается список [{date,amount,comment}, ...]'); return; }
+    let parsed;
+    try{ parsed = JSON.parse(raw); }catch(e){ alert('Не получилось разобрать JSON: '+e.message); return; }
     const d = loadData();
-    let added = 0;
-    for(const item of list){
+
+    // Поддерживает и старый формат (просто список поступлений), и новый
+    // {accruals:[...], payments:[...]} - для полного восстановления.
+    const accList = Array.isArray(parsed) ? [] : (parsed.accruals || []);
+    const payList = Array.isArray(parsed) ? parsed : (parsed.payments || []);
+
+    let addedAcc = 0;
+    for(const item of accList){
+      if(!item.date || !item.type) continue;
+      if(d.accruals.some(a=>a.date===item.date && a.type===item.type)) continue;
+      d.accruals.push({id:d.nextAccId++, date:item.date, type:item.type, white:item.white||0, gray:item.gray||0, paid:0});
+      addedAcc++;
+    }
+    if(addedAcc) d.accruals.sort((a,b)=>parseDate(a.date)-parseDate(b.date));
+
+    let addedPay = 0;
+    for(const item of payList){
       if(!item.date || !item.amount) continue;
       // не добавлять дубликат: та же дата+сумма уже есть
       if(d.payments.some(p=>p.date===item.date && p.amount===item.amount)) continue;
       d.payments.push({id:d.nextPayId++, date:item.date, amount:item.amount, comment:item.comment||''});
       applyFIFO(d, item.amount);
-      added++;
+      addedPay++;
     }
+
+    generateAutoAccruals(d);
+    d.accruals.sort((a,b)=>parseDate(a.date)-parseDate(b.date));
     saveData(d);
     document.getElementById('importText').value='';
     document.getElementById('importBox').style.display='none';
     renderAll();
-    alert(`Добавлено записей: ${added}`);
+    alert(`Начислений добавлено: ${addedAcc}, поступлений: ${addedPay}`);
   });
 
   renderAll();
