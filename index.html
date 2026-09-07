@@ -97,7 +97,7 @@ tr:hover td{background:rgba(99,102,241,.04)}
 
 <div class="section">Поступления</div>
 <div class="table-wrap"><table><thead><tr>
-<th>ID</th><th>Дата</th><th>Сумма</th><th>Комментарий</th>
+<th>ID</th><th>Дата</th><th>Сумма</th><th>Комментарий</th><th></th>
 </tr></thead><tbody id="payBody"></tbody></table></div>
 
 <div class="form-wrap">
@@ -437,8 +437,22 @@ function renderAll(){
 
   const ps=[...data.payments].sort((a,b)=>parseDate(a.date)-parseDate(b.date));
   document.getElementById('payBody').innerHTML=ps.map(p=>
-    `<tr><td>${p.id}</td><td>${p.date}</td><td class="num">${fm(p.amount)}</td><td>${p.comment||'-'}</td></tr>`
+    `<tr><td>${p.id}</td><td>${p.date}</td><td class="num">${fm(p.amount)}</td><td>${p.comment||'-'}</td><td><button class="delPayBtn" data-id="${p.id}" style="background:none;border:none;color:#e03131;cursor:pointer;font-size:12px">✕</button></td></tr>`
   ).join('');
+  document.querySelectorAll('.delPayBtn').forEach(btn=>{
+    btn.addEventListener('click', function(){
+      if(!confirm('Удалить это поступление?')) return;
+      const id = +this.dataset.id;
+      const d = loadData();
+      d.payments = d.payments.filter(p=>p.id!==id);
+      // пересчитать paid с нуля и заново разнести оставшиеся поступления по порядку дат
+      for(const a of d.accruals) a.paid = 0;
+      const sortedPays = [...d.payments].sort((a,b)=>parseDate(a.date)-parseDate(b.date));
+      for(const p of sortedPays) applyFIFO(d, p.amount);
+      saveData(d);
+      renderAll();
+    });
+  });
 
   document.getElementById('summary').innerHTML=`
     <span><span class="sl">Начислено:</span> <span class="sv">${fm(stats.totalAccrued)} &#8381;</span></span>
