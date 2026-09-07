@@ -537,11 +537,19 @@ function addPayment(){
     }
     if(addedAcc) d.accruals.sort((a,b)=>parseDate(a.date)-parseDate(b.date));
 
-    let addedPay = 0;
+    let addedPay = 0, renamedPay = 0;
     for(const item of payList){
       if(!item.date || !item.amount) continue;
-      // не добавлять дубликат: та же дата+сумма уже есть
-      if(d.payments.some(p=>p.date===item.date && p.amount===item.amount)) continue;
+      // та же дата+сумма уже есть - не дублировать, но обновить комментарий,
+      // если он отличается (так можно переименовывать через повторный импорт)
+      const existing = d.payments.find(p=>p.date===item.date && p.amount===item.amount);
+      if(existing){
+        if(item.comment && item.comment !== existing.comment){
+          existing.comment = item.comment;
+          renamedPay++;
+        }
+        continue;
+      }
       d.payments.push({id:d.nextPayId++, date:item.date, amount:item.amount, comment:item.comment||''});
       applyFIFO(d, item.amount);
       addedPay++;
@@ -553,7 +561,7 @@ function addPayment(){
     document.getElementById('importText').value='';
     document.getElementById('importBox').style.display='none';
     renderAll();
-    alert(`Начислений добавлено: ${addedAcc}, поступлений: ${addedPay}`);
+    alert(`Начислений добавлено: ${addedAcc}, поступлений добавлено: ${addedPay}, переименовано: ${renamedPay}`);
   });
 
   renderAll();
