@@ -279,11 +279,13 @@ function generateAutoAccruals(data){
           changed=true;
         }
       }
+      // Белая часть - по своему графику как раньше (аванс 25-го, зарплата
+      // 5-го следующего месяца), без серой - серая теперь отдельной строкой.
       const d25=new Date(y,m,25);
       if(d25>maxDate&&d25<=now){
         const ds=fmtDate(d25);
         if(!data.accruals.find(a=>a.date===ds&&a.type==='Аванс')){
-          data.accruals.push({id:data.nextAccId++,date:ds,type:'Аванс',white:WHITE_ADV,gray:GRAY_ADV,paid:0});
+          data.accruals.push({id:data.nextAccId++,date:ds,type:'Аванс',white:WHITE_ADV,gray:0,paid:0});
           changed=true;
         }
       }
@@ -291,7 +293,17 @@ function generateAutoAccruals(data){
       if(d5>maxDate&&d5<=now){
         const ds=fmtDate(d5);
         if(!data.accruals.find(a=>a.date===ds&&a.type==='Зарплата')){
-          data.accruals.push({id:data.nextAccId++,date:ds,type:'Зарплата',white:WHITE_SAL,gray:GRAY_SAL,paid:0});
+          data.accruals.push({id:data.nextAccId++,date:ds,type:'Зарплата',white:WHITE_SAL,gray:0,paid:0});
+          changed=true;
+        }
+      }
+      // Серая часть - одной суммой в последний день месяца, за который она
+      // (месяц должен полностью закончиться, до этого дня не начисляется).
+      const dLast=new Date(y,m+1,0);
+      if(dLast>maxDate&&dLast<=now){
+        const ds=fmtDate(dLast);
+        if(!data.accruals.find(a=>a.date===ds&&a.type==='Серая ЗП')){
+          data.accruals.push({id:data.nextAccId++,date:ds,type:'Серая ЗП',white:0,gray:GRAY_ADV+GRAY_SAL,paid:0});
           changed=true;
         }
       }
